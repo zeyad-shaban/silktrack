@@ -1,0 +1,1 @@
+SilkTrack — A kernel-mode WDF HID filter driver for Windows that cancels mouse jitter on rough surfaces using a real-time Kalman filter.
