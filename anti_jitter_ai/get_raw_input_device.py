@@ -44,11 +44,10 @@ hwnd = user32.CreateWindowExW(
 print(f"hwnd CraeteWindowExW response: {hwnd}")
 log_last_err()
 
-
 rid = RAWINPUTDEVICE(
     usUsagePage=0x0001,
     usUsage=0x0002,
-    dwFlags=RIDEV_INPUTSINK | RIDEV_NOLEGACY,
+    dwFlags=RIDEV_INPUTSINK,
     hwndTarget=hwnd,
 )
 
@@ -57,7 +56,7 @@ rid = RAWINPUTDEVICE(
 rid_call_res = user32.RegisterRawInputDevices(ctypes.byref(rid), 1, ctypes.sizeof(rid))
 
 print(f"Call register raw input device result: {rid_call_res}")
-log_last_err("RegisterRID call err")
+log_last_err("RegisterRID call Err")
 
 # Receive the message from message queue through GetMessage https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmessage
 
@@ -84,8 +83,8 @@ raw_data_y = []
 filtered_data_x = []
 filtered_data_y = []
 
-filter_x = KalmanFilter1D(Q_scale=130, R=1500, mouse_hz=1000)
-filter_y = KalmanFilter1D(Q_scale=130, R=1500, mouse_hz=1000)
+filter_x = KalmanFilter1D(Q_scale=130, R=3, mouse_hz=1000)
+filter_y = KalmanFilter1D(Q_scale=130, R=3, mouse_hz=1000)
 
 prev_filtered_x = 0
 prev_filtered_y = 0
@@ -123,6 +122,11 @@ while True:
     processed_x, processed_y = out_msg.pt.x, out_msg.pt.y
 
     raw = ctypes.cast(pDataBuff, ctypes.POINTER(RAWINPUT)).contents
+
+    # skip our own data
+    if raw._DUMMYUNIONNAME.mouse.ulExtraInformation == 0x5E1D:
+        continue
+
     raw_x, raw_y = raw._DUMMYUNIONNAME.mouse.lLastX, raw._DUMMYUNIONNAME.mouse.lLastY  # type: ignore
     filtered_x = filter_x.update(raw_x)
     filtered_y = filter_y.update(raw_y)
@@ -138,22 +142,21 @@ while True:
             break
 
     else:  # Send Input back to fix mouse https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput
-        # filtered_x, filtered_y = raw_x, raw_y # mirror
         dx = filtered_x - prev_filtered_x
         dy = filtered_y - prev_filtered_y
-        dx = dy = 0
-        # print(f"dx: {dx:.2f}, dy: {dy:.2f}, filtered_x: {filtered_x:.2f}, filtered_y: {filtered_y:.2f}, prev_filtered_x: {prev_filtered_x:.2f}, prev_filtered_y: {prev_filtered_y:.2f}")
+        # dx = dy = 0
+        print(f"dx: {dx:.2f}, dy: {dy:.2f}, filtered_x: {filtered_x:.2f}, filtered_y: {filtered_y:.2f}, prev_filtered_x: {prev_filtered_x:.2f}, prev_filtered_y: {prev_filtered_y:.2f}")
 
         prev_filtered_x = filtered_x
         prev_filtered_y = filtered_y
 
         mouse_input = MOUSEINPUT(
-            dx=ctypes.c_long(int(dx)),  # LONG
-            dy=ctypes.c_long(int(dy)),  # LONG
+            dx=ctypes.c_long(round(dx)),  # LONG
+            dy=ctypes.c_long(round(dy)),  # LONG
             mouseData=0,  # DWORD
             dwFlags=MOUSEEVENTF_MOVE,  # DWORD
             time=0,  # DWORD
-            dwExtraInfo=0,  # ULONG_PTR
+            dwExtraInfo=0x5E1D,  # ULONG_PTR
         )
 
         res = user32.SendInput(
