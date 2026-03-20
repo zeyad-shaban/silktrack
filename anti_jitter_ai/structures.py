@@ -1,6 +1,7 @@
 import ctypes
 from ctypes import wintypes
 from win32more.Windows.Win32.UI.Input import RAWHID, RAWKEYBOARD
+
 # i could have used win32more for all but.. where is the fun in that :P
 
 
@@ -36,38 +37,41 @@ class RAWINPUTHEADER(ctypes.Structure):
         ("wParam", wintypes.WPARAM),
     ]
 
+
 # https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawmouse
 class RAWMOUSE(ctypes.Structure):
     class _DUMMYUNIONNAME(ctypes.Union):
         class _DUMMYSTRUCTNAME(ctypes.Structure):
             _fields_ = [
                 ("usButtonFlags", wintypes.USHORT),
-                ("usButtonData",  wintypes.USHORT),
+                ("usButtonData", wintypes.USHORT),
             ]
+
         _fields_ = [
-            ("ulButtons",      wintypes.ULONG),
+            ("ulButtons", wintypes.ULONG),
             ("DUMMYSTRUCTNAME", _DUMMYSTRUCTNAME),
         ]
+
     _fields_ = [
-        ("usFlags",            wintypes.USHORT),
-        ("DUMMYUNIONNAME",     _DUMMYUNIONNAME),
-        ("ulRawButtons",       wintypes.ULONG),
-        ("lLastX",             wintypes.LONG),
-        ("lLastY",             wintypes.LONG),
+        ("usFlags", wintypes.USHORT),
+        ("DUMMYUNIONNAME", _DUMMYUNIONNAME),
+        ("ulRawButtons", wintypes.ULONG),
+        ("lLastX", wintypes.LONG),
+        ("lLastY", wintypes.LONG),
         ("ulExtraInformation", wintypes.ULONG),
     ]
-    
 
 
 # https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawinput
-class RAWINPUT (ctypes.Structure):
+class RAWINPUT(ctypes.Structure):
     class _DUMMYUNIONNAME(ctypes.Union):
         _fields_ = [
-            ('mouse', RAWMOUSE),
-            ('keyboard', RAWKEYBOARD),
-            ('hid', RAWHID),
+            ("mouse", RAWMOUSE),
+            ("keyboard", RAWKEYBOARD),
+            ("hid", RAWHID),
         ]
+
     _fields_ = [
-        ('header', RAWINPUTHEADER),
-        ('_DUMMYUNIONNAME', _DUMMYUNIONNAME),
+        ("header", RAWINPUTHEADER),
+        ("_DUMMYUNIONNAME", _DUMMYUNIONNAME),
     ]

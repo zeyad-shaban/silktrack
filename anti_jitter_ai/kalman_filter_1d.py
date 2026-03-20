@@ -28,7 +28,7 @@ class KalmanFilter1D:
         self.x = self.x + K @ (point - self.H @ self.x)
         self.P = (self.I - K @ self.H) @ self.P
 
-        return fixed_point
+        return fixed_point.item()
 
 
 if __name__ == "__main__":
