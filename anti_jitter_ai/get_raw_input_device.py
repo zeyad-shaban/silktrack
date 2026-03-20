@@ -1,7 +1,11 @@
 import ctypes
 from ctypes import wintypes
+from kalman_filter_1d import KalmanFilter1D
 from constants import *
 from structures import *
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 user32 = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
@@ -48,7 +52,7 @@ log_last_err()
 
 # Receive the message from message queue through GetMessage https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmessage
 
-out_msg = MSG()  # todo this
+out_msg = MSG()
 
 # hunt for WM_INPUT https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-input
 get_msg_success = user32.GetMessageW(
@@ -65,6 +69,14 @@ print(f"msg: {out_msg}")
 pcbSize = ctypes.c_uint(0)
 cbSizeHeader = ctypes.sizeof(RAWINPUTHEADER)
 pDataBuff: ctypes.Array[ctypes.c_byte] = (ctypes.c_byte * 1)()
+
+raw_data_x = []
+raw_data_y = []
+filtered_data_x = []
+filtered_data_y = []
+
+filter_x = KalmanFilter1D(Q_scale=130, R=1500, mouse_hz=1000)
+filter_y = KalmanFilter1D(Q_scale=130, R=1500, mouse_hz=1000)
 
 while True:
     get_msg_success = user32.GetMessageW(
@@ -96,7 +108,35 @@ while True:
         cbSizeHeader,  # cbSizeHeader
     )
     # log_last_err()
-    
+
+    processed_x, processed_y = out_msg.pt.x, out_msg.pt.y
+
     raw = ctypes.cast(pDataBuff, ctypes.POINTER(RAWINPUT)).contents
-    raw_x, raw_y = raw._DUMMYUNIONNAME.mouse.lLastX, raw._DUMMYUNIONNAME.mouse.lLastY # type: ignore
-    print(f"processed: {out_msg.pt.x}, {out_msg.pt.y}, Raw: {raw_x} {raw_y}")
+    raw_x, raw_y = raw._DUMMYUNIONNAME.mouse.lLastX, raw._DUMMYUNIONNAME.mouse.lLastY  # type: ignore
+    filtered_x = filter_x.update(raw_x)
+    filtered_y = filter_y.update(raw_y)
+
+    raw_data_x.append(raw_x)
+    raw_data_y.append(raw_y)
+    filtered_data_x.append(filtered_x)
+    filtered_data_y.append(filtered_y)
+
+    print(f"{len(raw_data_x)} / 300")
+    if len(raw_data_x) >= 300:
+        break
+    # print(f"processed: {out_msg.pt.x}, {out_msg.pt.y}, Raw: {raw_x} {raw_y}")
+
+plt.subplot(211)
+plt.plot(raw_data_x, label="Raw")
+plt.plot(filtered_data_x, label="Filtered")
+plt.title("X")
+plt.legend()
+
+plt.subplot(212)
+plt.plot(raw_data_y, label="Raw")
+plt.plot(filtered_data_y, label="Filtered")
+plt.title("Y")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
