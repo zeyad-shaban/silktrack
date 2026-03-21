@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+env/
+
+# Outputs (keep demo gif, ignore raw recordings)
+outputs/*.mp4
+outputs/*.avi
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+Thumbs.db
+desktop.ini
