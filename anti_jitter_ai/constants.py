@@ -2,7 +2,7 @@ import ctypes
 from ctypes import wintypes
 
 # custom
-WM_SILKTRACK = 0x8001
+WM_SILKTRACK = 0x5E1D
 
 # win defined
 WP_INPUT = 0x00FF
