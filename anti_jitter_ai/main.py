@@ -70,8 +70,8 @@ if __name__ == "__main__":
             raw_x, raw_y = raw.data.mouse.lLastX, raw.data.mouse.lLastY  # type: ignore
             filtered_x = filter_x.update(raw_x)
             filtered_y = filter_y.update(raw_y)
-            dx = filtered_x - prev_filtered_x
-            dy = filtered_y - prev_filtered_y
+            dx = filtered_x
+            dy = filtered_y
 
             prev_filtered_x = filtered_x
             prev_filtered_y = filtered_y
