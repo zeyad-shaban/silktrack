@@ -4,6 +4,12 @@ A real-time Windows user-mode service that cancels mouse jitter on rough surface
 
 ![demo](outputs/demo.gif)
 
+### Filter Performance
+
+Raw vs filtered mouse deltas (X and Y axes) on a rough surface:
+
+![filter performance](outputs/hid_filtered.png)
+
 ---
 
 ## The Problem
@@ -67,12 +73,14 @@ P   =  (I − K · H) · P⁻                  (reduce uncertainty after measure
 ```
 
 Where:
+
 - `z` is the raw measured delta from the sensor
 - `H = [1, 0]` — we only observe position, not velocity
 - `R` is the measurement noise covariance — how much we trust the sensor
 - `K` is the Kalman gain — the optimal blend between prediction and measurement
 
 **Intuition:**
+
 - High `K` → trust the sensor → responsive but noisier
 - Low `K` → trust the model → smoother but more lag
 
@@ -82,10 +90,10 @@ Since X and Y mouse axes are completely independent, two separate 1D Kalman filt
 
 ## Tuning
 
-| Parameter | Effect | Rough surface | Smooth surface |
-|-----------|--------|--------------|----------------|
-| `Q_scale` | Higher = more responsive, less smooth | Lower | Higher |
-| `R` | Higher = more smoothing, more lag | Higher | Lower |
+| Parameter | Effect                                | Rough surface | Smooth surface |
+| --------- | ------------------------------------- | ------------- | -------------- |
+| `Q_scale` | Higher = more responsive, less smooth | Lower         | Higher         |
+| `R`       | Higher = more smoothing, more lag     | Higher        | Lower          |
 
 Default values: `Q_scale=110, R=1500, mouse_hz=1000`
 
