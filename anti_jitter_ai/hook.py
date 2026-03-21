@@ -23,29 +23,35 @@ class MouseHook:
         self.prev_raw_x = self.prev_raw_y = None
         self.q = queue.Queue()
 
+        self.hook_handle = None
+        self.running = True
+
     def install(self):
         threading.Thread(target=self._worker, daemon=True).start()
-        user32.SetWindowsHookExW(
+
+        self.hook_handle = user32.SetWindowsHookExW(
             WH_MOUSE_LL,  # idHook
             self.mouse_cb,  # lpfn
             None,  # hmod
             0,  # dwThreadId
         )
         self._log_last_err()
-
         msg = wintypes.MSG()
-        while True:
-            user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
 
-            if msg.message == WM_SILKTRACK:
-                self._send_filtered_input(msg.wParam, msg.lParam)
-                continue
-
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+        try:
+            while self.running:
+                user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
+                user32.TranslateMessage(ctypes.byref(msg))
+                user32.DispatchMessageW(ctypes.byref(msg))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.uninstall()
 
     def uninstall(self):
-        pass  # todo
+        user32.UnhookWindowsHookEx(self.hook_handle)
+        self.running = False
+        print("okay done uninstalling")
 
     def _worker(self):
         while True:
@@ -72,7 +78,8 @@ class MouseHook:
 
         filtered_dx, filtered_dy = self.filter_x.update(raw_x - self.prev_raw_x), self.filter_y.update(raw_y - self.prev_raw_y)
 
-        print(f"raw_dx: {raw_x - self.prev_raw_x:+.0f} raw_dy: {raw_y - self.prev_raw_y:+.0f} | filtered_dx: {filtered_dx:+.2f} filtered_dy: {filtered_dy:+.2f}")
+        print(f"raw_x: {raw_x}, prev_raw_x: {self.prev_raw_x}")
+        # print(f"raw_dx: {raw_x - self.prev_raw_x:+.0f} raw_dy: {raw_y - self.prev_raw_y:+.0f} | filtered_dx: {filtered_dx:+.2f} filtered_dy: {filtered_dy:+.2f}")
 
         self.prev_raw_x = raw_x
         self.prev_raw_y = raw_y
@@ -91,12 +98,10 @@ class MouseHook:
             INPUT(type=0, mi=mouse_input),  # pInputs, 0 for mouse
             ctypes.sizeof(INPUT),  # cbSize
         )
-        print(f"res from sendinput: {res}")
+
         return 1
 
 
 if __name__ == "__main__":
-    mouse_hook = MouseHook(Q_scale=130, R=1500, mouse_hz=1000)
-    # mouse_hook.install()
-    mouse_hook._send_filtered_input(5, 5)
-    mouse_hook._send_filtered_input(8, 8)
+    mouse_hook = MouseHook(Q_scale=1000, R=1, mouse_hz=100)
+    mouse_hook.install()
