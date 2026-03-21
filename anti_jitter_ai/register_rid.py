@@ -29,7 +29,7 @@ def register_rid():
         0,  # hInstance
         0,  # lpParam
     )
-    log_last_err("Creating HandleWindow err: ")
+    # log_last_err("Creating HandleWindow err: ")
 
     rid = RAWINPUTDEVICE(
         usUsagePage=0x0001,
