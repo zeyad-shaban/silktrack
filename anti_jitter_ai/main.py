@@ -22,8 +22,8 @@ if __name__ == "__main__":
     hwnd = register_rid()
 
     # loop and filter mouse data
-    filter_x = KalmanFilter1D(Q_scale=100, R=1000, mouse_hz=1000)
-    filter_y = KalmanFilter1D(Q_scale=100, R=1000, mouse_hz=1000)
+    filter_x = KalmanFilter1D(Q_scale=110, R=1500, mouse_hz=1000)
+    filter_y = KalmanFilter1D(Q_scale=110, R=1500, mouse_hz=1000)
     prev_filtered_x = 0
     prev_filtered_y = 0
 
